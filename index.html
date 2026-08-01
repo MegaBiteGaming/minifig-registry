@@ -226,7 +226,7 @@
       <img src="icons/logo-header.png" alt="MegaBites logo">
       <div class="brand-text">
         <h1>MEGABITES <span>MINIFIGS</span></h1>
-        <div class="subtitle">Minifig Collection</div>
+        <div class="subtitle">Minifig Collection <span id="versionTag" style="opacity:0.6; text-decoration:underline; cursor:pointer;"></span></div>
       </div>
     </div>
     <div style="display:flex; flex-direction:column; align-items:flex-end; gap:5px;">
@@ -377,6 +377,8 @@
 <script>
 (function(){
   "use strict";
+
+  const APP_VERSION = "1.5.0";
 
   // ---------- IndexedDB layer ----------
   const DB_NAME = "minifig-registry";
@@ -568,6 +570,15 @@
 
     const body = document.createElement("div");
     body.className = "body";
+
+    if(f.setNumber){
+      const eyebrow = document.createElement("div");
+      eyebrow.className = "meta";
+      eyebrow.style.marginBottom = "3px";
+      eyebrow.innerHTML = '<span style="color:var(--blue); font-family:var(--mono); font-size:10px; letter-spacing:0.04em;">' + f.setNumber.toUpperCase() + '</span>';
+      body.appendChild(eyebrow);
+    }
+
     const name = document.createElement("p");
     name.className = "name";
     name.textContent = f.name || "Unnamed";
@@ -577,7 +588,7 @@
     meta.className = "meta";
     const loc = document.createElement("span");
     loc.className = "loc";
-    loc.textContent = f.location || f.setNumber || "\u2014";
+    loc.textContent = f.location || "\u2014";
     meta.appendChild(loc);
     const qty = document.createElement("span");
     qty.className = "qty";
@@ -926,6 +937,22 @@
 
   // ---------- Init ----------
   (async function init(){
+    const versionTag = document.getElementById("versionTag");
+    versionTag.textContent = "v" + APP_VERSION;
+    versionTag.onclick = async () => {
+      showToast("Clearing cache\u2026");
+      try{
+        if("serviceWorker" in navigator){
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for(const reg of regs) await reg.unregister();
+        }
+        if("caches" in window){
+          const keys = await caches.keys();
+          for(const k of keys) await caches.delete(k);
+        }
+      }catch(e){}
+      location.reload(true);
+    };
     try{
       db = await openDB();
       allFigures = await dbGetAll();
