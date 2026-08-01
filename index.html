@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>MegaBites Minifig Collection</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0B0E14">
+<style>
+  :root{
+    --bg:#0B0E14;
+    --panel:#12161F;
+    --panel-2:#171C27;
+    --border:#232939;
+    --text:#E7EAF0;
+    --text-muted:#8A93A6;
+    --green:#3ADB76;
+    --blue:#4FB4FF;
+    --gold:#E8B34C;
+    --red:#FF6B6B;
+    --mono: ui-monospace, "SF Mono", "Menlo", "Consolas", monospace;
+    --sans: -apple-system, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--bg); color:var(--text); font-family:var(--sans);
+    padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
+    overflow-x:hidden;
+  }
+  ::selection{ background:var(--green); color:#0B0E14; }
+
+  header{
+    position:sticky; top:0; z-index:20;
+    background:linear-gradient(180deg, rgba(11,14,20,0.98), rgba(11,14,20,0.92));
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);
+    padding:18px 16px 12px;
+  }
+  .title-row{ display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand img{ width:34px; height:34px; border-radius:8px; flex:0 0 auto; }
+  .brand-text{ display:flex; flex-direction:column; }
+  h1{
+    font-family:var(--mono); font-size:14px; letter-spacing:0.12em; text-transform:uppercase;
+    margin:0; font-weight:700; color:var(--text); line-height:1.2;
+  }
+  h1 span{ color:var(--green); }
+  .subtitle{
+    font-family:var(--mono); font-size:9.5px; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--text-muted); margin-top:2px;
+  }
+  .value-badge{
+    font-family:var(--mono); font-size:11px; letter-spacing:0.04em; color:var(--gold);
+    border:1px solid rgba(232,179,76,0.35); background:rgba(232,179,76,0.08);
+    border-radius:20px; padding:4px 10px; white-space:nowrap;
+  }
+  .count-badge{
+    font-family:var(--mono); font-size:11px; letter-spacing:0.08em; color:var(--text-muted);
+    border:1px solid var(--border); border-radius:20px; padding:4px 10px; white-space:nowrap;
+  }
+  .search-wrap{ margin-top:12px; position:relative; }
+  .search-wrap input{
+    width:100%; background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    color:var(--text); font-family:var(--sans); font-size:15px; padding:11px 14px 11px 36px;
+    outline:none;
+  }
+  .search-wrap input:focus{ border-color:var(--green); }
+  .search-wrap svg{ position:absolute; left:12px; top:50%; transform:translateY(-50%); opacity:0.5; }
+
+  .chips{
+    display:flex; gap:8px; overflow-x:auto; margin-top:10px; padding-bottom:2px;
+    scrollbar-width:none;
+  }
+  .chips::-webkit-scrollbar{display:none;}
+  .chip{
+    flex:0 0 auto; font-family:var(--mono); font-size:11px; letter-spacing:0.06em; text-transform:uppercase;
+    padding:6px 12px; border-radius:20px; border:1px solid var(--border); color:var(--text-muted);
+    background:var(--panel); cursor:pointer; user-select:none;
+  }
+  .chip.active{ border-color:var(--green); color:var(--green); background:rgba(58,219,118,0.08); }
+
+  main{ padding:16px; padding-bottom:100px; max-width:900px; margin:0 auto; }
+
+  .grid{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:12px;
+  }
+  .card{
+    background:var(--panel); border:1px solid var(--border); border-radius:14px; overflow:hidden;
+    cursor:pointer; position:relative; transition:transform .12s ease, border-color .12s ease;
+  }
+  .card:active{ transform:scale(0.97); }
+  .card .thumb{
+    width:100%; aspect-ratio:1/1; background:var(--panel-2); display:flex; align-items:center;
+    justify-content:center; overflow:hidden; position:relative;
+  }
+  .card .thumb img{ width:100%; height:100%; object-fit:cover; }
+  .card .thumb .ph-icon{ opacity:0.25; }
+  .card .faction-bar{
+    position:absolute; left:0; top:0; bottom:0; width:4px;
+  }
+  .card .body{ padding:9px 10px 11px; }
+  .card .name{ font-size:13.5px; font-weight:600; line-height:1.25; margin:0 0 3px; }
+  .card .meta{
+    font-family:var(--mono); font-size:10px; color:var(--text-muted); letter-spacing:0.03em;
+    display:flex; justify-content:space-between; gap:6px;
+  }
+  .card .meta .loc{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .card .qty{
+    font-family:var(--mono); font-size:10px; color:var(--gold); background:rgba(232,179,76,0.12);
+    border-radius:6px; padding:1px 5px; flex:0 0 auto;
+  }
+
+  .empty{
+    text-align:center; padding:80px 20px; color:var(--text-muted);
+  }
+  .empty .scan{
+    width:88px; height:88px; margin:0 auto 18px; border:1.5px dashed var(--border); border-radius:16px;
+    display:flex; align-items:center; justify-content:center; opacity:0.6;
+  }
+  .empty h2{ font-family:var(--mono); font-size:13px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text); margin:0 0 8px;}
+  .empty p{ font-size:13.5px; line-height:1.5; max-width:280px; margin:0 auto; }
+
+  .fab{
+    position:fixed; right:18px; bottom:calc(20px + env(safe-area-inset-bottom));
+    width:58px; height:58px; border-radius:50%; background:var(--green); color:#0B0E14;
+    border:none; font-size:28px; font-weight:400; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 8px 24px rgba(58,219,118,0.35); z-index:30; cursor:pointer;
+  }
+  .fab:active{ transform:scale(0.92); }
+
+  .toolbar{
+    position:fixed; left:18px; bottom:calc(20px + env(safe-area-inset-bottom)); z-index:30;
+    display:flex; gap:8px;
+  }
+  .icon-btn{
+    width:44px; height:44px; border-radius:50%; background:var(--panel); border:1px solid var(--border);
+    color:var(--text-muted); display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .icon-btn:active{ transform:scale(0.92); }
+
+  /* Sheet / modal */
+  .sheet-backdrop{
+    position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:40; opacity:0; pointer-events:none;
+    transition:opacity .2s ease;
+  }
+  .sheet-backdrop.open{ opacity:1; pointer-events:auto; }
+  .sheet{
+    position:fixed; left:0; right:0; bottom:0; z-index:41; background:var(--bg);
+    border-top:1px solid var(--border); border-radius:20px 20px 0 0;
+    max-height:92vh; overflow-y:auto; transform:translateY(100%); transition:transform .25s cubic-bezier(.32,.72,0,1);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .sheet.open{ transform:translateY(0); }
+  .sheet-handle{ width:36px; height:4px; background:var(--border); border-radius:4px; margin:10px auto 4px; }
+  .sheet-header{
+    display:flex; justify-content:space-between; align-items:center; padding:10px 18px 4px;
+  }
+  .sheet-header h3{ font-family:var(--mono); font-size:13px; letter-spacing:0.08em; text-transform:uppercase; margin:0;}
+  .sheet-close{ background:none; border:none; color:var(--text-muted); font-size:22px; padding:4px 8px; cursor:pointer; }
+  .sheet-body{ padding:8px 18px 28px; }
+
+  .photo-input{
+    width:100%; aspect-ratio:4/3; border-radius:14px; background:var(--panel); border:1.5px dashed var(--border);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--text-muted);
+    font-family:var(--mono); font-size:11px; letter-spacing:0.05em; text-transform:uppercase; gap:8px;
+    overflow:hidden; position:relative; margin-bottom:16px; cursor:pointer;
+  }
+  .photo-input img{ width:100%; height:100%; object-fit:cover; position:absolute; inset:0; }
+  .photo-input input{ display:none; }
+
+  label.field{ display:block; margin-bottom:14px; }
+  label.field .lbl{
+    font-family:var(--mono); font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--text-muted); display:block; margin-bottom:6px;
+  }
+  .field input, .field select, .field textarea{
+    width:100%; background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    color:var(--text); font-family:var(--sans); font-size:16px; padding:11px 13px; outline:none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{ border-color:var(--green); }
+  .field textarea{ resize:vertical; min-height:60px; }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+  .btn{
+    width:100%; padding:14px; border-radius:12px; border:none; font-family:var(--mono);
+    font-size:12.5px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; font-weight:700;
+  }
+  .btn-primary{ background:var(--green); color:#0B0E14; }
+  .btn-primary:active{ opacity:0.85; }
+  .btn-danger{ background:transparent; color:var(--red); border:1px solid rgba(255,107,107,0.4); margin-top:10px; }
+  .btn-ghost{ background:var(--panel); color:var(--text); border:1px solid var(--border); }
+
+  .actions-row{ display:flex; gap:10px; margin-top:6px; }
+
+  .toast{
+    position:fixed; left:50%; bottom:110px; transform:translateX(-50%) translateY(20px);
+    background:var(--panel); border:1px solid var(--border); color:var(--text); padding:10px 18px;
+    border-radius:30px; font-size:13px; z-index:60; opacity:0; transition:all .25s ease; pointer-events:none;
+    font-family:var(--mono);
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  #file-import{ display:none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-row">
+    <div class="brand">
+      <img src="icons/logo-header.png" alt="MegaBites logo">
+      <div class="brand-text">
+        <h1>MEGABITES <span>MINIFIGS</span></h1>
+        <div class="subtitle">Minifig Collection</div>
+      </div>
+    </div>
+    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:5px;">
+      <div class="count-badge" id="countBadge">0 UNITS</div>
+      <div class="value-badge" id="valueBadge">$0.00</div>
+    </div>
+  </div>
+  <div class="search-wrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="searchInput" type="text" placeholder="Search name, set number, notes\u2026" autocomplete="off">
+  </div>
+  <div class="chips" id="chips"></div>
+</header>
+
+<main>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="emptyState" style="display:none;">
+    <div class="scan">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="7" width="7" height="9" rx="1.5"/><rect x="7" y="4" width="1" height="3"/><rect x="4" y="18" width="16" height="2" rx="1"/><path d="M14 16h6v-9h-3l-1-3h-2"/></svg>
+    </div>
+    <h2>No figures catalogued</h2>
+    <p>Tap the + button to scan in your first minifigure. Everything is stored only on this device.</p>
+  </div>
+</main>
+
+<div class="toolbar">
+  <div class="icon-btn" id="exportBtn" title="Export backup">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+  </div>
+  <div class="icon-btn" id="importBtn" title="Import backup">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M5 21h14"/></svg>
+  </div>
+</div>
+<input type="file" id="file-import" accept="application/json">
+
+<button class="fab" id="addBtn">+</button>
+
+<div class="sheet-backdrop" id="backdrop"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3 id="sheetTitle">New Minifigure</h3>
+    <button class="sheet-close" id="sheetClose">&times;</button>
+  </div>
+  <div class="sheet-body">
+    <label class="photo-input" id="photoInputWrap">
+      <span id="photoPlaceholder">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8a2 2 0 012-2h1l1.2-2h7.6L17 6h1a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V8z"/><circle cx="12" cy="13" r="3.5"/></svg>
+        <div>Tap to add photo</div>
+      </span>
+      <img id="photoPreview" style="display:none;">
+      <input type="file" id="photoFile" accept="image/*" capture="environment">
+    </label>
+
+    <label class="field">
+      <span class="lbl">Name / Character</span>
+      <input id="f_name" type="text" placeholder="e.g. Luke Skywalker (Bespin)">
+    </label>
+
+    <div class="row2">
+      <label class="field">
+        <span class="lbl">Item Number</span>
+        <input id="f_set" type="text" placeholder="75331" inputmode="numeric">
+      </label>
+      <label class="field">
+        <span class="lbl">Quantity</span>
+        <input id="f_qty" type="number" min="1" value="1">
+      </label>
+    </div>
+
+    <label class="field">
+      <span class="lbl">Price (each)</span>
+      <input id="f_price" type="number" min="0" step="0.01" placeholder="0.00" inputmode="decimal">
+    </label>
+
+    <label class="field">
+      <span class="lbl">Faction / Theme</span>
+      <input id="f_faction" list="factionList" type="text" placeholder="e.g. Rebel Alliance">
+      <datalist id="factionList">
+        <option value="Galactic Empire">
+        <option value="Rebel Alliance">
+        <option value="First Order">
+        <option value="Resistance">
+        <option value="Jedi Order">
+        <option value="Sith">
+        <option value="Clone Army">
+        <option value="Galactic Republic">
+        <option value="Separatist Alliance">
+        <option value="Bounty Hunter">
+        <option value="Mandalorian">
+        <option value="Other">
+      </datalist>
+    </label>
+
+    <label class="field">
+      <span class="lbl">Storage Location</span>
+      <input id="f_location" type="text" placeholder="e.g. Bin 3, Drawer B">
+    </label>
+
+    <label class="field">
+      <span class="lbl">Notes</span>
+      <textarea id="f_notes" placeholder="Condition, accessories, variant details\u2026"></textarea>
+    </label>
+
+    <button class="btn btn-primary" id="saveBtn">Save Minifigure</button>
+    <button class="btn btn-danger" id="deleteBtn" style="display:none;">Delete Minifigure</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- IndexedDB layer ----------
+  const DB_NAME = "minifig-registry";
+  const STORE = "figures";
+  let db;
+
+  function openDB(){
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = (e) => {
+        const _db = e.target.result;
+        if(!_db.objectStoreNames.contains(STORE)){
+          const store = _db.createObjectStore(STORE, { keyPath: "id" });
+          store.createIndex("faction", "faction", { unique:false });
+        }
+      };
+      req.onsuccess = (e) => resolve(e.target.result);
+      req.onerror = (e) => reject(e.target.error);
+    });
+  }
+
+  function txStore(mode){
+    return db.transaction(STORE, mode).objectStore(STORE);
+  }
+
+  function dbGetAll(){
+    return new Promise((resolve, reject) => {
+      const req = txStore("readonly").getAll();
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  function dbPut(item){
+    return new Promise((resolve, reject) => {
+      const req = txStore("readwrite").put(item);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+  function dbDelete(id){
+    return new Promise((resolve, reject) => {
+      const req = txStore("readwrite").delete(id);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  // ---------- State ----------
+  let allFigures = [];
+  let activeFaction = "All";
+  let searchTerm = "";
+  let editingId = null;
+  let pendingPhoto = null; // base64 string or null; undefined means "unchanged" during edit
+
+  // ---------- DOM ----------
+  const grid = document.getElementById("grid");
+  const emptyState = document.getElementById("emptyState");
+  const countBadge = document.getElementById("countBadge");
+  const valueBadge = document.getElementById("valueBadge");
+  const chipsEl = document.getElementById("chips");
+  const searchInput = document.getElementById("searchInput");
+  const sheet = document.getElementById("sheet");
+  const backdrop = document.getElementById("backdrop");
+  const sheetTitle = document.getElementById("sheetTitle");
+  const deleteBtn = document.getElementById("deleteBtn");
+  const toast = document.getElementById("toast");
+
+  const FACTION_COLORS = {
+    "Galactic Empire": "#FF6B6B",
+    "Rebel Alliance": "#3ADB76",
+    "First Order": "#FF6B6B",
+    "Resistance": "#4FB4FF",
+    "Jedi Order": "#4FB4FF",
+    "Sith": "#FF6B6B",
+    "Clone Army": "#E8B34C",
+    "Galactic Republic": "#E8B34C",
+    "Separatist Alliance": "#B98CE8",
+    "Bounty Hunter": "#E8B34C",
+    "Mandalorian": "#C0C6D1",
+    "Other": "#8A93A6"
+  };
+  function colorFor(faction){
+    return FACTION_COLORS[faction] || "#4FB4FF";
+  }
+
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 1800);
+  }
+
+  // ---------- Rendering ----------
+  function render(){
+    // chips
+    const factions = Array.from(new Set(allFigures.map(f => f.faction).filter(Boolean))).sort();
+    const chipList = ["All", ...factions];
+    chipsEl.innerHTML = "";
+    chipList.forEach(name => {
+      const chip = document.createElement("div");
+      chip.className = "chip" + (name === activeFaction ? " active" : "");
+      chip.textContent = name;
+      chip.onclick = () => { activeFaction = name; render(); };
+      chipsEl.appendChild(chip);
+    });
+
+    // filter
+    let list = allFigures.slice();
+    if(activeFaction !== "All"){
+      list = list.filter(f => f.faction === activeFaction);
+    }
+    if(searchTerm.trim()){
+      const t = searchTerm.trim().toLowerCase();
+      list = list.filter(f =>
+        (f.name||"").toLowerCase().includes(t) ||
+        (f.setNumber||"").toLowerCase().includes(t) ||
+        (f.notes||"").toLowerCase().includes(t) ||
+        (f.location||"").toLowerCase().includes(t)
+      );
+    }
+    list.sort((a,b) => (a.name||"").localeCompare(b.name||""));
+
+    grid.innerHTML = "";
+    if(list.length === 0){
+      emptyState.style.display = "block";
+      grid.style.display = "none";
+    } else {
+      emptyState.style.display = "none";
+      grid.style.display = "grid";
+      list.forEach(f => grid.appendChild(renderCard(f)));
+    }
+
+    const totalQty = allFigures.reduce((sum,f) => sum + (parseInt(f.quantity)||1), 0);
+    countBadge.textContent = totalQty + " UNIT" + (totalQty === 1 ? "" : "S");
+
+    const totalValue = allFigures.reduce((sum,f) => {
+      const price = (typeof f.price === "number" && !isNaN(f.price)) ? f.price : 0;
+      const qty = parseInt(f.quantity) || 1;
+      return sum + price * qty;
+    }, 0);
+    valueBadge.textContent = "$" + totalValue.toFixed(2);
+  }
+
+  function renderCard(f){
+    const card = document.createElement("div");
+    card.className = "card";
+    card.onclick = () => openEdit(f);
+
+    const bar = document.createElement("div");
+    bar.className = "faction-bar";
+    bar.style.background = colorFor(f.faction);
+    card.appendChild(bar);
+
+    const thumb = document.createElement("div");
+    thumb.className = "thumb";
+    if(f.photo){
+      const img = document.createElement("img");
+      img.src = f.photo;
+      thumb.appendChild(img);
+    } else {
+      thumb.innerHTML = '<svg class="ph-icon" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8a2 2 0 012-2h1l1.2-2h7.6L17 6h1a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V8z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+    }
+    card.appendChild(thumb);
+
+    const body = document.createElement("div");
+    body.className = "body";
+    const name = document.createElement("p");
+    name.className = "name";
+    name.textContent = f.name || "Unnamed";
+    body.appendChild(name);
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    const loc = document.createElement("span");
+    loc.className = "loc";
+    loc.textContent = f.location || f.setNumber || "\u2014";
+    meta.appendChild(loc);
+    const qty = document.createElement("span");
+    qty.className = "qty";
+    qty.textContent = "x" + (f.quantity || 1);
+    meta.appendChild(qty);
+    body.appendChild(meta);
+
+    if(typeof f.price === "number" && !isNaN(f.price)){
+      const priceLine = document.createElement("div");
+      priceLine.className = "meta";
+      priceLine.style.marginTop = "3px";
+      priceLine.innerHTML = '<span style="color:var(--gold);">$' + f.price.toFixed(2) + '</span>';
+      body.appendChild(priceLine);
+    }
+
+    card.appendChild(body);
+    return card;
+  }
+
+  // ---------- Sheet / form ----------
+  function openSheet(){
+    backdrop.classList.add("open");
+    sheet.classList.add("open");
+  }
+  function closeSheet(){
+    backdrop.classList.remove("open");
+    sheet.classList.remove("open");
+  }
+
+  function resetForm(){
+    editingId = null;
+    pendingPhoto = null;
+    document.getElementById("f_name").value = "";
+    document.getElementById("f_set").value = "";
+    document.getElementById("f_qty").value = "1";
+    document.getElementById("f_price").value = "";
+    document.getElementById("f_faction").value = "";
+    document.getElementById("f_location").value = "";
+    document.getElementById("f_notes").value = "";
+    document.getElementById("photoPreview").style.display = "none";
+    document.getElementById("photoPlaceholder").style.display = "flex";
+    deleteBtn.style.display = "none";
+    sheetTitle.textContent = "New Minifigure";
+  }
+
+  function openEdit(f){
+    editingId = f.id;
+    pendingPhoto = f.photo || null;
+    document.getElementById("f_name").value = f.name || "";
+    document.getElementById("f_set").value = f.setNumber || "";
+    document.getElementById("f_qty").value = f.quantity || 1;
+    document.getElementById("f_price").value = (f.price === undefined || f.price === null) ? "" : f.price;
+    document.getElementById("f_faction").value = f.faction || "";
+    document.getElementById("f_location").value = f.location || "";
+    document.getElementById("f_notes").value = f.notes || "";
+    if(f.photo){
+      document.getElementById("photoPreview").src = f.photo;
+      document.getElementById("photoPreview").style.display = "block";
+      document.getElementById("photoPlaceholder").style.display = "none";
+    } else {
+      document.getElementById("photoPreview").style.display = "none";
+      document.getElementById("photoPlaceholder").style.display = "flex";
+    }
+    deleteBtn.style.display = "block";
+    sheetTitle.textContent = "Edit Minifigure";
+    openSheet();
+  }
+
+  document.getElementById("addBtn").onclick = () => { resetForm(); openSheet(); };
+  document.getElementById("sheetClose").onclick = closeSheet;
+  backdrop.onclick = closeSheet;
+
+  // photo capture + downscale
+  document.getElementById("photoFile").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 640;
+        let w = img.width, h = img.height;
+        if(w > h && w > MAX){ h = Math.round(h * MAX/w); w = MAX; }
+        else if(h > MAX){ w = Math.round(w * MAX/h); h = MAX; }
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.75);
+        pendingPhoto = dataUrl;
+        document.getElementById("photoPreview").src = dataUrl;
+        document.getElementById("photoPreview").style.display = "block";
+        document.getElementById("photoPlaceholder").style.display = "none";
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById("saveBtn").onclick = async () => {
+    const name = document.getElementById("f_name").value.trim();
+    if(!name){
+      showToast("Name is required");
+      return;
+    }
+    const item = {
+      id: editingId || (Date.now().toString(36) + Math.random().toString(36).slice(2)),
+      name: name,
+      setNumber: document.getElementById("f_set").value.trim(),
+      quantity: parseInt(document.getElementById("f_qty").value) || 1,
+      price: document.getElementById("f_price").value === "" ? null : parseFloat(document.getElementById("f_price").value),
+      faction: document.getElementById("f_faction").value.trim(),
+      location: document.getElementById("f_location").value.trim(),
+      notes: document.getElementById("f_notes").value.trim(),
+      photo: pendingPhoto,
+      createdAt: editingId ? (allFigures.find(f=>f.id===editingId)||{}).createdAt || Date.now() : Date.now()
+    };
+    await dbPut(item);
+    allFigures = await dbGetAll();
+    closeSheet();
+    render();
+    showToast(editingId ? "Saved changes" : "Added to registry");
+  };
+
+  deleteBtn.onclick = async () => {
+    if(!editingId) return;
+    if(!confirm("Delete this minifigure from your registry?")) return;
+    await dbDelete(editingId);
+    allFigures = await dbGetAll();
+    closeSheet();
+    render();
+    showToast("Deleted");
+  };
+
+  searchInput.addEventListener("input", (e) => {
+    searchTerm = e.target.value;
+    render();
+  });
+
+  // ---------- Backup / restore ----------
+  document.getElementById("exportBtn").onclick = () => {
+    const blob = new Blob([JSON.stringify(allFigures, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const date = new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = "minifig-registry-backup-" + date + ".json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast("Backup downloaded");
+  };
+
+  document.getElementById("importBtn").onclick = () => {
+    document.getElementById("file-import").click();
+  };
+  document.getElementById("file-import").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try{
+        const data = JSON.parse(ev.target.result);
+        if(!Array.isArray(data)) throw new Error("bad format");
+        for(const item of data){
+          if(!item.id) item.id = Date.now().toString(36) + Math.random().toString(36).slice(2);
+          await dbPut(item);
+        }
+        allFigures = await dbGetAll();
+        render();
+        showToast("Imported " + data.length + " figures");
+      }catch(err){
+        showToast("Import failed \u2014 invalid file");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  });
+
+  // ---------- Init ----------
+  (async function init(){
+    try{
+      db = await openDB();
+      allFigures = await dbGetAll();
+      render();
+    }catch(err){
+      showToast("Storage unavailable in this preview");
+      console.error(err);
+    }
+
+    if("serviceWorker" in navigator){
+      navigator.serviceWorker.register("sw.js").catch(()=>{});
+    }
+  })();
+
+})();
+</script>
+</body>
+</html>
