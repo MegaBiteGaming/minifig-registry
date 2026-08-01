@@ -32,6 +32,14 @@ iOS needs to load the app from a URL once before it can be "installed." The easi
 
 Open the app once while connected (this lets the service worker cache everything). After that, turn on Airplane Mode and open it again — it'll work exactly the same. Add a figure, close the app, restart your phone — the data stays, all stored locally in the browser's IndexedDB.
 
+## Online lookup (optional)
+
+Tap the gear icon (bottom left) to add a free **Rebrickable** API key. Once set, a search icon next to the Item Number field lets you look up a figure by its item number (e.g. `sw1211`) or name while you're online — it auto-fills the name, item number, and photo.
+
+To get a key: create a free account at [rebrickable.com](https://rebrickable.com), then go to **Account → Settings → API** to generate one, and paste it into the app.
+
+This only runs when you have a connection — everything else in the app keeps working fully offline as before.
+
 ## Backing up your data
 
 Tap the up-arrow icon (bottom left) to export a JSON file of your whole collection — useful before you clear Safari data, switch phones, or just want a backup. The down-arrow icon re-imports it.

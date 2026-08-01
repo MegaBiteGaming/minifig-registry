@@ -1,4 +1,4 @@
-const CACHE_NAME = "megabites-minifigs-v2";
+const CACHE_NAME = "megabites-minifigs-v3";
 const ASSETS = [
   "./",
   "./index.html",
