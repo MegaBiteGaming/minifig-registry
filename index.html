@@ -231,7 +231,7 @@
     </div>
     <div style="display:flex; flex-direction:column; align-items:flex-end; gap:5px;">
       <div class="count-badge" id="countBadge">0 UNITS</div>
-      <div class="value-badge" id="valueBadge">$0.00</div>
+      <div class="value-badge" id="valueBadge">£0.00</div>
     </div>
   </div>
   <div class="search-wrap">
@@ -544,7 +544,7 @@
       const qty = parseInt(f.quantity) || 1;
       return sum + price * qty;
     }, 0);
-    valueBadge.textContent = "$" + totalValue.toFixed(2);
+    valueBadge.textContent = "£" + totalValue.toFixed(2);
   }
 
   function renderCard(f){
