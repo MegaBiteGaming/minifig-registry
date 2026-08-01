@@ -307,6 +307,9 @@
 
     <div id="lookupStatus" style="display:none; font-family:var(--mono); font-size:11px; letter-spacing:0.04em; color:var(--text-muted); margin:-6px 0 14px;"></div>
     <div id="lookupResults" style="display:none; margin:-6px 0 16px; border:1px solid var(--border); border-radius:12px; overflow:hidden;"></div>
+    <p style="font-size:11.5px; color:var(--text-muted); margin:-8px 0 16px; line-height:1.4;">
+      Tip: online lookup matches best by character name. LEGO/BrickLink item numbers (like sw1163) often won't match directly \u2014 search the name instead, then the item number fills in for you.
+    </p>
 
     <label class="field">
       <span class="lbl">Price (each)</span>
@@ -756,32 +759,41 @@
 
   async function selectLookupResult(item){
     document.getElementById("f_name").value = item.name || "";
-    document.getElementById("f_set").value = item.set_num || "";
+    const setField = document.getElementById("f_set");
+    if(!setField.value.trim()){
+      setField.value = item.set_num || "";
+    }
     clearLookupResults();
-    setLookupStatus("Fetching photo\u2026");
+
     if(item.set_img_url){
+      document.getElementById("photoPreview").src = item.set_img_url;
+      document.getElementById("photoPreview").style.display = "block";
+      document.getElementById("photoPlaceholder").style.display = "none";
+      pendingPhoto = item.set_img_url;
+      setLookupStatus("Filled in \u2014 saving photo for offline use\u2026");
       try{
         const resp = await fetch(item.set_img_url);
+        if(!resp.ok) throw new Error("fetch failed");
         const blob = await resp.blob();
         const dataUrl = await blobToDataURL(blob);
         pendingPhoto = dataUrl;
         document.getElementById("photoPreview").src = dataUrl;
-        document.getElementById("photoPreview").style.display = "block";
-        document.getElementById("photoPlaceholder").style.display = "none";
         setLookupStatus("Filled in from Rebrickable");
       }catch(err){
-        setLookupStatus("Filled in name and item number \u2014 photo couldn't be fetched, add one manually.");
+        setLookupStatus("Filled in \u2014 photo will need a connection until you save the figure and it's cached, or take your own photo.");
       }
     } else {
-      setLookupStatus("Filled in from Rebrickable");
+      setLookupStatus("Filled in from Rebrickable \u2014 no photo available, add one manually.");
     }
-    setTimeout(() => setLookupStatus(""), 2500);
+    setTimeout(() => setLookupStatus(""), 3200);
   }
 
   async function doLookup(){
-    const query = document.getElementById("f_set").value.trim() || document.getElementById("f_name").value.trim();
+    const nameQuery = document.getElementById("f_name").value.trim();
+    const itemQuery = document.getElementById("f_set").value.trim();
+    const query = nameQuery || itemQuery;
     if(!query){
-      showToast("Enter an item number or name first");
+      showToast("Enter a name or item number first");
       return;
     }
     if(!navigator.onLine){
@@ -798,10 +810,10 @@
     setLookupStatus("Searching\u2026");
     try{
       let results = [];
-      const looksLikeCode = /^(fig-\d+|[a-z]{2,5}\d{3,6}[a-z]?)$/i.test(query.replace(/\s/g,""));
-      if(looksLikeCode){
+      const isRebrickableId = /^fig-\d+$/i.test(itemQuery);
+      if(isRebrickableId){
         try{
-          const r = await fetch("https://rebrickable.com/api/v3/lego/minifigs/" + encodeURIComponent(query.trim()) + "/", {
+          const r = await fetch("https://rebrickable.com/api/v3/lego/minifigs/" + encodeURIComponent(itemQuery) + "/", {
             headers: { "Authorization": "key " + apiKey }
           });
           if(r.ok){
@@ -811,12 +823,17 @@
         }catch(e){ /* fall through to search */ }
       }
       if(results.length === 0){
-        const r = await fetch("https://rebrickable.com/api/v3/lego/minifigs/?search=" + encodeURIComponent(query) + "&page_size=8", {
+        const searchTerm = nameQuery || itemQuery;
+        const r = await fetch("https://rebrickable.com/api/v3/lego/minifigs/?search=" + encodeURIComponent(searchTerm) + "&page_size=8", {
           headers: { "Authorization": "key " + apiKey }
         });
         if(!r.ok) throw new Error("API error " + r.status);
         const d = await r.json();
         results = d.results || [];
+      }
+      if(results.length === 0 && !nameQuery){
+        setLookupStatus("No matches for that item number. Try the character name instead.");
+        return;
       }
       renderLookupResults(results);
     }catch(err){
