@@ -322,13 +322,8 @@
 
     <div class="row2">
       <label class="field">
-        <span class="lbl">Item Number</span>
-        <div style="display:flex; gap:8px;">
-          <input id="f_set" type="text" placeholder="sw1211 or name" inputmode="text" style="flex:1;">
-          <button type="button" id="lookupBtn" class="icon-btn" style="flex:0 0 44px;" title="Look up online">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          </button>
-        </div>
+        <span class="lbl">Item Number (LEGO)</span>
+        <input id="f_set" type="text" placeholder="e.g. sw1211" inputmode="text">
       </label>
       <label class="field">
         <span class="lbl">Quantity</span>
@@ -336,10 +331,20 @@
       </label>
     </div>
 
+    <label class="field">
+      <span class="lbl">Rebrickable Ref (optional)</span>
+      <div style="display:flex; gap:8px;">
+        <input id="f_rebrickable" type="text" placeholder="fig-012345 or search by name below" inputmode="text" style="flex:1;">
+        <button type="button" id="lookupBtn" class="icon-btn" style="flex:0 0 44px;" title="Look up online">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+      </div>
+    </label>
+
     <div id="lookupStatus" style="display:none; font-family:var(--mono); font-size:11px; letter-spacing:0.04em; color:var(--text-muted); margin:-6px 0 14px;"></div>
     <div id="lookupResults" style="display:none; margin:-6px 0 16px; border:1px solid var(--border); border-radius:12px; overflow:hidden;"></div>
     <p style="font-size:11.5px; color:var(--text-muted); margin:-8px 0 16px; line-height:1.4;">
-      Tip: online lookup matches best by character name. LEGO/BrickLink item numbers (like sw1163) often won't match directly \u2014 search the name instead, then the item number fills in for you.
+      Tip: online lookup matches best by character name. Your LEGO item number is never changed by a lookup \u2014 search by name and the matched Rebrickable reference fills in separately, alongside the name and photo.
     </p>
 
     <label class="field">
@@ -409,7 +414,7 @@
 (function(){
   "use strict";
 
-  const APP_VERSION = "1.6.0";
+  const APP_VERSION = "1.7.0";
 
   // ---------- IndexedDB layer ----------
   const DB_NAME = "minifig-registry";
@@ -565,6 +570,7 @@
       list = list.filter(f =>
         (f.name||"").toLowerCase().includes(t) ||
         (f.setNumber||"").toLowerCase().includes(t) ||
+        (f.rebrickableRef||"").toLowerCase().includes(t) ||
         (f.notes||"").toLowerCase().includes(t) ||
         (f.location||"").toLowerCase().includes(t)
       );
@@ -670,6 +676,7 @@
     pendingPhoto = null;
     document.getElementById("f_name").value = "";
     document.getElementById("f_set").value = "";
+    document.getElementById("f_rebrickable").value = "";
     document.getElementById("f_qty").value = "1";
     document.getElementById("f_price").value = "";
     document.getElementById("f_faction").value = "";
@@ -690,6 +697,7 @@
     pendingPhoto = f.photo || null;
     document.getElementById("f_name").value = f.name || "";
     document.getElementById("f_set").value = f.setNumber || "";
+    document.getElementById("f_rebrickable").value = f.rebrickableRef || "";
     document.getElementById("f_qty").value = f.quantity || 1;
     document.getElementById("f_price").value = (f.price === undefined || f.price === null) ? "" : f.price;
     document.getElementById("f_faction").value = f.faction || "";
@@ -832,10 +840,7 @@
 
   async function selectLookupResult(item){
     document.getElementById("f_name").value = item.name || "";
-    const setField = document.getElementById("f_set");
-    if(!setField.value.trim()){
-      setField.value = item.set_num || "";
-    }
+    document.getElementById("f_rebrickable").value = item.set_num || "";
     clearLookupResults();
 
     if(item.set_img_url){
@@ -865,10 +870,10 @@
 
   async function doLookup(){
     const nameQuery = document.getElementById("f_name").value.trim();
-    const itemQuery = document.getElementById("f_set").value.trim();
-    const query = nameQuery || itemQuery;
+    const refQuery = document.getElementById("f_rebrickable").value.trim();
+    const query = nameQuery || refQuery;
     if(!query){
-      showToast("Enter a name or item number first");
+      showToast("Enter a name or Rebrickable ref first");
       return;
     }
     if(!navigator.onLine){
@@ -885,10 +890,10 @@
     setLookupStatus("Searching\u2026");
     try{
       let results = [];
-      const isRebrickableId = /^fig-\d+$/i.test(itemQuery);
+      const isRebrickableId = /^fig-\d+$/i.test(refQuery);
       if(isRebrickableId){
         try{
-          const r = await fetch("https://rebrickable.com/api/v3/lego/minifigs/" + encodeURIComponent(itemQuery) + "/", {
+          const r = await fetch("https://rebrickable.com/api/v3/lego/minifigs/" + encodeURIComponent(refQuery) + "/", {
             headers: { "Authorization": "key " + apiKey }
           });
           if(r.ok){
@@ -898,7 +903,7 @@
         }catch(e){ /* fall through to search */ }
       }
       if(results.length === 0){
-        const searchTerm = nameQuery || itemQuery;
+        const searchTerm = nameQuery || refQuery;
         const r = await fetch("https://rebrickable.com/api/v3/lego/minifigs/?search=" + encodeURIComponent(searchTerm) + "&page_size=8", {
           headers: { "Authorization": "key " + apiKey }
         });
@@ -907,7 +912,7 @@
         results = d.results || [];
       }
       if(results.length === 0 && !nameQuery){
-        setLookupStatus("No matches for that item number. Try the character name instead.");
+        setLookupStatus("No matches for that reference. Try the character name instead.");
         return;
       }
       renderLookupResults(results);
@@ -928,6 +933,7 @@
       id: editingId || (Date.now().toString(36) + Math.random().toString(36).slice(2)),
       name: name,
       setNumber: document.getElementById("f_set").value.trim(),
+      rebrickableRef: document.getElementById("f_rebrickable").value.trim(),
       quantity: parseInt(document.getElementById("f_qty").value) || 1,
       price: document.getElementById("f_price").value === "" ? null : parseFloat(document.getElementById("f_price").value),
       faction: document.getElementById("f_faction").value.trim(),
