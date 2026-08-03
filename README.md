@@ -8,4 +8,6 @@ Setup for Apple phones currently, not test android.
 
 DB is saved on phone, with the option of backing up the db.
 
-Version 1.8.3
+Includes a "Wanted" list — track figures you're after with a photo and target price, handy for comparing while out shopping.
+
+Version 1.9.0

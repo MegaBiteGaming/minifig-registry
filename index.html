@@ -224,6 +224,21 @@
   .field textarea{ resize:vertical; min-height:60px; }
   .row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 
+  .prefix-input{ position:relative; }
+  .prefix-input .prefix{
+    position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--text-muted);
+    font-family:var(--sans); font-size:16px; pointer-events:none;
+  }
+  .prefix-input input{ padding-left:27px; }
+
+  .tabs{ display:flex; gap:8px; margin-top:12px; }
+  .tab-btn{
+    flex:1; font-family:var(--mono); font-size:11px; letter-spacing:0.06em; text-transform:uppercase;
+    padding:9px 10px; border-radius:10px; border:1px solid var(--border); color:var(--text-muted);
+    background:var(--panel); cursor:pointer;
+  }
+  .tab-btn.active{ border-color:var(--green); color:var(--green); background:rgba(58,219,118,0.08); }
+
   .btn{
     width:100%; padding:14px; border-radius:12px; border:none; font-family:var(--mono);
     font-size:12.5px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; font-weight:700;
@@ -270,13 +285,17 @@
       <img src="icons/logo-header.png" alt="MegaBites logo">
       <div class="brand-text">
         <h1>MEGABITES <span>MINIFIGS</span></h1>
-        <div class="subtitle">Minifig Collection <span id="versionTag" style="opacity:0.6; text-decoration:underline; cursor:pointer;"></span></div>
+        <div class="subtitle"><span id="subtitleText">Minifig Collection</span> <span id="versionTag" style="opacity:0.6; text-decoration:underline; cursor:pointer;"></span></div>
       </div>
     </div>
     <div style="display:flex; flex-direction:column; align-items:flex-end; gap:5px;">
       <div class="count-badge" id="countBadge">0 UNITS</div>
       <div class="value-badge" id="valueBadge">£0.00</div>
     </div>
+  </div>
+  <div class="tabs" id="tabSwitch">
+    <button class="tab-btn active" data-tab="collection" type="button">My Collection</button>
+    <button class="tab-btn" data-tab="wanted" type="button">Wanted</button>
   </div>
   <div class="search-wrap">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -291,8 +310,8 @@
     <div class="scan">
       <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="7" width="7" height="9" rx="1.5"/><rect x="7" y="4" width="1" height="3"/><rect x="4" y="18" width="16" height="2" rx="1"/><path d="M14 16h6v-9h-3l-1-3h-2"/></svg>
     </div>
-    <h2>No figures catalogued</h2>
-    <p>Tap the + button to scan in your first minifigure. Everything is stored only on this device.</p>
+    <h2 id="emptyTitle">No figures catalogued</h2>
+    <p id="emptyText">Tap the + button to scan in your first minifigure. Everything is stored only on this device.</p>
   </div>
 </main>
 
@@ -344,40 +363,43 @@
       <input id="f_name" type="text" placeholder="e.g. Luke Skywalker (Bespin)">
     </label>
 
-    <div class="row2">
+    <div id="collectionFields">
+      <div class="row2">
+        <label class="field">
+          <span class="lbl">Item Number (LEGO)</span>
+          <input id="f_set" type="text" placeholder="e.g. sw1211" inputmode="text">
+        </label>
+        <label class="field">
+          <span class="lbl">Quantity</span>
+          <input id="f_qty" type="number" min="1" value="1">
+        </label>
+      </div>
+
       <label class="field">
-        <span class="lbl">Item Number (LEGO)</span>
-        <input id="f_set" type="text" placeholder="e.g. sw1211" inputmode="text">
+        <span class="lbl">Rebrickable Ref (optional)</span>
+        <div style="display:flex; gap:8px;">
+          <input id="f_rebrickable" type="text" placeholder="fig-012345 or search by name below" inputmode="text" style="flex:1;">
+          <button type="button" id="lookupBtn" class="icon-btn" style="flex:0 0 44px;" title="Look up online">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </button>
+        </div>
       </label>
-      <label class="field">
-        <span class="lbl">Quantity</span>
-        <input id="f_qty" type="number" min="1" value="1">
-      </label>
+
+      <div id="lookupStatus" style="display:none; font-family:var(--mono); font-size:11px; letter-spacing:0.04em; color:var(--text-muted); margin:-6px 0 14px;"></div>
+      <div id="lookupResults" style="display:none; margin:-6px 0 16px; border:1px solid var(--border); border-radius:12px; overflow:hidden;"></div>
     </div>
 
     <label class="field">
-      <span class="lbl">Rebrickable Ref (optional)</span>
-      <div style="display:flex; gap:8px;">
-        <input id="f_rebrickable" type="text" placeholder="fig-012345 or search by name below" inputmode="text" style="flex:1;">
-        <button type="button" id="lookupBtn" class="icon-btn" style="flex:0 0 44px;" title="Look up online">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        </button>
+      <span class="lbl" id="priceLabel">Price (each)</span>
+      <div class="prefix-input">
+        <span class="prefix">£</span>
+        <input id="f_price" type="number" min="0" step="0.01" placeholder="0.00" inputmode="decimal">
       </div>
     </label>
 
-    <div id="lookupStatus" style="display:none; font-family:var(--mono); font-size:11px; letter-spacing:0.04em; color:var(--text-muted); margin:-6px 0 14px;"></div>
-    <div id="lookupResults" style="display:none; margin:-6px 0 16px; border:1px solid var(--border); border-radius:12px; overflow:hidden;"></div>
-    <p style="font-size:11.5px; color:var(--text-muted); margin:-8px 0 16px; line-height:1.4;">
-      Tip: online lookup matches best by character name. Your LEGO item number is never changed by a lookup \u2014 search by name and the matched Rebrickable reference fills in separately, alongside the name and photo.
-    </p>
-
-    <label class="field">
-      <span class="lbl">Price (each) — £</span>
-      <input id="f_price" type="number" min="0" step="0.01" placeholder="0.00" inputmode="decimal">
-    </label>
-
-    <label class="field">
-      <span class="lbl">Faction / Theme</span>
+    <div id="collectionFields2">
+      <label class="field">
+        <span class="lbl">Faction / Theme</span>
       <input id="f_faction" list="factionList" type="text" placeholder="e.g. Rebel Alliance">
       <datalist id="factionList">
         <option value="Galactic Empire">
@@ -404,6 +426,7 @@
       <span class="lbl">Notes</span>
       <textarea id="f_notes" placeholder="Condition, accessories, variant details\u2026"></textarea>
     </label>
+    </div>
 
     <button class="btn btn-primary" id="saveBtn">Save Minifigure</button>
     <button class="btn btn-danger" id="deleteBtn" style="display:none;">Delete Minifigure</button>
@@ -438,22 +461,26 @@
 (function(){
   "use strict";
 
-  const APP_VERSION = "1.8.3";
+  const APP_VERSION = "1.9.0";
 
   // ---------- IndexedDB layer ----------
   const DB_NAME = "minifig-registry";
   const STORE = "figures";
+  const WANTED_STORE = "wanted";
   const SETTINGS_STORE = "settings";
   let db;
 
   function openDB(){
     return new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, 2);
+      const req = indexedDB.open(DB_NAME, 3);
       req.onupgradeneeded = (e) => {
         const _db = e.target.result;
         if(!_db.objectStoreNames.contains(STORE)){
           const store = _db.createObjectStore(STORE, { keyPath: "id" });
           store.createIndex("faction", "faction", { unique:false });
+        }
+        if(!_db.objectStoreNames.contains(WANTED_STORE)){
+          _db.createObjectStore(WANTED_STORE, { keyPath: "id" });
         }
         if(!_db.objectStoreNames.contains(SETTINGS_STORE)){
           _db.createObjectStore(SETTINGS_STORE, { keyPath: "key" });
@@ -482,34 +509,40 @@
     });
   }
 
-  function txStore(mode){
-    return db.transaction(STORE, mode).objectStore(STORE);
+  function txStore(mode, storeName){
+    return db.transaction(storeName, mode).objectStore(storeName);
   }
 
-  function dbGetAll(){
+  function dbGetAll(storeName){
+    storeName = storeName || STORE;
     return new Promise((resolve, reject) => {
-      const req = txStore("readonly").getAll();
+      const req = txStore("readonly", storeName).getAll();
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
     });
   }
-  function dbPut(item){
+  function dbPut(item, storeName){
+    storeName = storeName || STORE;
     return new Promise((resolve, reject) => {
-      const req = txStore("readwrite").put(item);
+      const req = txStore("readwrite", storeName).put(item);
       req.onsuccess = () => resolve();
       req.onerror = () => reject(req.error);
     });
   }
-  function dbDelete(id){
+  function dbDelete(id, storeName){
+    storeName = storeName || STORE;
     return new Promise((resolve, reject) => {
-      const req = txStore("readwrite").delete(id);
+      const req = txStore("readwrite", storeName).delete(id);
       req.onsuccess = () => resolve();
       req.onerror = () => reject(req.error);
     });
   }
 
+
   // ---------- State ----------
   let allFigures = [];
+  let allWanted = [];
+  let activeTab = "collection"; // "collection" | "wanted"
   let activeFaction = "All";
   let searchTerm = "";
   let editingId = null;
@@ -531,6 +564,13 @@
   const settingsBackdrop = document.getElementById("settingsBackdrop");
   const lookupStatus = document.getElementById("lookupStatus");
   const lookupResults = document.getElementById("lookupResults");
+  const tabSwitch = document.getElementById("tabSwitch");
+  const subtitleText = document.getElementById("subtitleText");
+  const collectionFields = document.getElementById("collectionFields");
+  const collectionFields2 = document.getElementById("collectionFields2");
+  const priceLabel = document.getElementById("priceLabel");
+  const emptyTitle = document.getElementById("emptyTitle");
+  const emptyText = document.getElementById("emptyText");
 
   const FACTION_COLORS = {
     "Galactic Empire": "#FF6B6B",
@@ -572,10 +612,16 @@
 
   // ---------- Rendering ----------
   function render(){
+    if(activeTab === "wanted"){
+      renderWantedTab();
+      return;
+    }
+
     // chips
     const factions = Array.from(new Set(allFigures.map(f => f.faction).filter(Boolean))).sort();
     const chipList = ["All", ...factions];
     chipsEl.innerHTML = "";
+    chipsEl.style.display = "flex";
     chipList.forEach(name => {
       const chip = document.createElement("div");
       chip.className = "chip" + (name === activeFaction ? " active" : "");
@@ -603,6 +649,8 @@
 
     grid.innerHTML = "";
     if(list.length === 0){
+      emptyTitle.textContent = "No figures catalogued";
+      emptyText.textContent = "Tap the + button to scan in your first minifigure. Everything is stored only on this device.";
       emptyState.style.display = "block";
       grid.style.display = "none";
     } else {
@@ -620,6 +668,75 @@
       return sum + price * qty;
     }, 0);
     valueBadge.textContent = "£" + totalValue.toFixed(2);
+  }
+
+  function renderWantedTab(){
+    chipsEl.innerHTML = "";
+    chipsEl.style.display = "none";
+
+    let list = allWanted.slice();
+    if(searchTerm.trim()){
+      const t = searchTerm.trim().toLowerCase();
+      list = list.filter(w => (w.name||"").toLowerCase().includes(t));
+    }
+    list.sort((a,b) => (a.name||"").localeCompare(b.name||""));
+
+    grid.innerHTML = "";
+    if(list.length === 0){
+      emptyTitle.textContent = "No wanted figures yet";
+      emptyText.textContent = "Tap the + button to add a minifigure you're after \u2014 handy for comparing price and looks while you're out shopping.";
+      emptyState.style.display = "block";
+      grid.style.display = "none";
+    } else {
+      emptyState.style.display = "none";
+      grid.style.display = "grid";
+      list.forEach(w => grid.appendChild(renderWantedCard(w)));
+    }
+
+    countBadge.textContent = allWanted.length + " WANTED";
+    const totalValue = allWanted.reduce((sum,w) => {
+      const price = (typeof w.price === "number" && !isNaN(w.price)) ? w.price : 0;
+      return sum + price;
+    }, 0);
+    valueBadge.textContent = "£" + totalValue.toFixed(2);
+  }
+
+  function renderWantedCard(w){
+    const card = document.createElement("div");
+    card.className = "card";
+    card.onclick = () => openEditWanted(w);
+
+    const thumb = document.createElement("div");
+    thumb.className = "thumb";
+    if(w.photo){
+      const img = document.createElement("img");
+      img.src = w.photo;
+      img.style.cursor = "zoom-in";
+      img.onclick = (e) => { e.stopPropagation(); openLightbox(w.photo); };
+      thumb.appendChild(img);
+    } else {
+      thumb.innerHTML = '<svg class="ph-icon" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8a2 2 0 012-2h1l1.2-2h7.6L17 6h1a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V8z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+    }
+    card.appendChild(thumb);
+
+    const body = document.createElement("div");
+    body.className = "body";
+
+    const name = document.createElement("p");
+    name.className = "name";
+    name.textContent = w.name || "Unnamed";
+    body.appendChild(name);
+
+    if(typeof w.price === "number" && !isNaN(w.price)){
+      const priceLine = document.createElement("div");
+      priceLine.className = "meta";
+      priceLine.style.marginTop = "3px";
+      priceLine.innerHTML = '<span style="color:var(--gold);">£' + w.price.toFixed(2) + '</span>';
+      body.appendChild(priceLine);
+    }
+
+    card.appendChild(body);
+    return card;
   }
 
   function renderCard(f){
@@ -695,7 +812,19 @@
     sheet.classList.remove("open");
   }
 
-  function resetForm(){
+  let sheetMode = "collection"; // "collection" | "wanted"
+
+  function applySheetMode(mode){
+    sheetMode = mode;
+    const isCollection = mode === "collection";
+    collectionFields.style.display = isCollection ? "block" : "none";
+    collectionFields2.style.display = isCollection ? "block" : "none";
+    priceLabel.textContent = isCollection ? "Price (each)" : "Target Price";
+  }
+
+  function resetForm(mode){
+    mode = mode || "collection";
+    applySheetMode(mode);
     editingId = null;
     pendingPhoto = null;
     document.getElementById("f_name").value = "";
@@ -711,12 +840,14 @@
     document.getElementById("photoChangeBtn").style.display = "none";
     document.getElementById("photoZoomHint").style.display = "none";
     deleteBtn.style.display = "none";
-    sheetTitle.textContent = "New Minifigure";
+    document.getElementById("saveBtn").textContent = mode === "collection" ? "Save Minifigure" : "Save Wanted Item";
+    sheetTitle.textContent = mode === "collection" ? "New Minifigure" : "New Wanted Item";
     clearLookupResults();
     setLookupStatus("");
   }
 
   function openEdit(f){
+    applySheetMode("collection");
     editingId = f.id;
     pendingPhoto = f.photo || null;
     document.getElementById("f_name").value = f.name || "";
@@ -740,15 +871,59 @@
       document.getElementById("photoZoomHint").style.display = "none";
     }
     deleteBtn.style.display = "block";
+    deleteBtn.textContent = "Delete Minifigure";
+    document.getElementById("saveBtn").textContent = "Save Minifigure";
     sheetTitle.textContent = "Edit Minifigure";
     clearLookupResults();
     setLookupStatus("");
     openSheet();
   }
 
-  document.getElementById("addBtn").onclick = () => { resetForm(); openSheet(); };
+  function openEditWanted(w){
+    applySheetMode("wanted");
+    editingId = w.id;
+    pendingPhoto = w.photo || null;
+    document.getElementById("f_name").value = w.name || "";
+    document.getElementById("f_price").value = (w.price === undefined || w.price === null) ? "" : w.price;
+    if(w.photo){
+      document.getElementById("photoPreview").src = w.photo;
+      document.getElementById("photoPreview").style.display = "block";
+      document.getElementById("photoPlaceholder").style.display = "none";
+      document.getElementById("photoChangeBtn").style.display = "flex";
+      document.getElementById("photoZoomHint").style.display = "flex";
+    } else {
+      document.getElementById("photoPreview").style.display = "none";
+      document.getElementById("photoPlaceholder").style.display = "flex";
+      document.getElementById("photoChangeBtn").style.display = "none";
+      document.getElementById("photoZoomHint").style.display = "none";
+    }
+    deleteBtn.style.display = "block";
+    deleteBtn.textContent = "Delete Wanted Item";
+    document.getElementById("saveBtn").textContent = "Save Wanted Item";
+    sheetTitle.textContent = "Edit Wanted Item";
+    clearLookupResults();
+    setLookupStatus("");
+    openSheet();
+  }
+
+  document.getElementById("addBtn").onclick = () => { resetForm(activeTab); openSheet(); };
   document.getElementById("sheetClose").onclick = closeSheet;
   backdrop.onclick = closeSheet;
+
+  tabSwitch.addEventListener("click", (e) => {
+    const btn = e.target.closest(".tab-btn");
+    if(!btn) return;
+    const tab = btn.dataset.tab;
+    if(tab === activeTab) return;
+    activeTab = tab;
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === activeTab));
+    subtitleText.textContent = activeTab === "collection" ? "Minifig Collection" : "Wanted List";
+    searchInput.placeholder = activeTab === "collection" ? "Search name, set number, notes\u2026" : "Search wanted list\u2026";
+    searchInput.value = "";
+    searchTerm = "";
+    render();
+  });
+
 
   document.getElementById("settingsBtn").onclick = async () => {
     const key = await getSetting("rebrickable_api_key");
@@ -953,6 +1128,21 @@
       showToast("Name is required");
       return;
     }
+    if(sheetMode === "wanted"){
+      const item = {
+        id: editingId || (Date.now().toString(36) + Math.random().toString(36).slice(2)),
+        name: name,
+        price: document.getElementById("f_price").value === "" ? null : parseFloat(document.getElementById("f_price").value),
+        photo: pendingPhoto,
+        createdAt: editingId ? (allWanted.find(w=>w.id===editingId)||{}).createdAt || Date.now() : Date.now()
+      };
+      await dbPut(item, WANTED_STORE);
+      allWanted = await dbGetAll(WANTED_STORE);
+      closeSheet();
+      render();
+      showToast(editingId ? "Saved changes" : "Added to wanted list");
+      return;
+    }
     const item = {
       id: editingId || (Date.now().toString(36) + Math.random().toString(36).slice(2)),
       name: name,
@@ -975,6 +1165,15 @@
 
   deleteBtn.onclick = async () => {
     if(!editingId) return;
+    if(sheetMode === "wanted"){
+      if(!confirm("Remove this item from your wanted list?")) return;
+      await dbDelete(editingId, WANTED_STORE);
+      allWanted = await dbGetAll(WANTED_STORE);
+      closeSheet();
+      render();
+      showToast("Removed");
+      return;
+    }
     if(!confirm("Delete this minifigure from your registry?")) return;
     await dbDelete(editingId);
     allFigures = await dbGetAll();
@@ -983,6 +1182,7 @@
     showToast("Deleted");
   };
 
+
   searchInput.addEventListener("input", (e) => {
     searchTerm = e.target.value;
     render();
@@ -990,7 +1190,8 @@
 
   // ---------- Backup / restore ----------
   document.getElementById("exportBtn").onclick = () => {
-    const blob = new Blob([JSON.stringify(allFigures, null, 2)], { type: "application/json" });
+    const payload = { figures: allFigures, wanted: allWanted };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     const date = new Date().toISOString().slice(0,10);
@@ -1013,14 +1214,30 @@
     reader.onload = async (ev) => {
       try{
         const data = JSON.parse(ev.target.result);
-        if(!Array.isArray(data)) throw new Error("bad format");
-        for(const item of data){
+        // Support both the old backup format (a plain array of figures)
+        // and the newer format ({ figures: [...], wanted: [...] }).
+        let figuresData, wantedData;
+        if(Array.isArray(data)){
+          figuresData = data;
+          wantedData = [];
+        } else if(data && typeof data === "object"){
+          figuresData = Array.isArray(data.figures) ? data.figures : [];
+          wantedData = Array.isArray(data.wanted) ? data.wanted : [];
+        } else {
+          throw new Error("bad format");
+        }
+        for(const item of figuresData){
           if(!item.id) item.id = Date.now().toString(36) + Math.random().toString(36).slice(2);
           await dbPut(item);
         }
+        for(const item of wantedData){
+          if(!item.id) item.id = Date.now().toString(36) + Math.random().toString(36).slice(2);
+          await dbPut(item, WANTED_STORE);
+        }
         allFigures = await dbGetAll();
+        allWanted = await dbGetAll(WANTED_STORE);
         render();
-        showToast("Imported " + data.length + " figures");
+        showToast("Imported " + figuresData.length + " figures" + (wantedData.length ? " + " + wantedData.length + " wanted" : ""));
       }catch(err){
         showToast("Import failed \u2014 invalid file");
       }
@@ -1063,6 +1280,7 @@
     try{
       db = await openDB();
       allFigures = await dbGetAll();
+      allWanted = await dbGetAll(WANTED_STORE);
       render();
     }catch(err){
       showToast("Storage unavailable in this preview");
