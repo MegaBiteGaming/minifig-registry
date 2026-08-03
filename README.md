@@ -8,4 +8,4 @@ Setup for Apple phones currently, not test android.
 
 DB is saved on phone, with the option of backing up the db.
 
-Version 1.7.0
+Version 1.8.0

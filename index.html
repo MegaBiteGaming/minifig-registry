@@ -33,6 +33,21 @@
   }
   ::selection{ background:var(--green); color:#0B0E14; }
 
+  #splash{
+    position:fixed; inset:0; z-index:200;
+    background:var(--bg);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:16px;
+    transition:opacity .4s ease;
+  }
+  #splash img{ width:96px; height:96px; border-radius:22px; box-shadow:0 8px 30px rgba(0,0,0,0.35); animation:splash-pulse 1.6s ease-in-out infinite; }
+  #splash .splash-title{
+    font-family:var(--sans); font-weight:700; letter-spacing:0.08em; font-size:16px; color:var(--text);
+  }
+  #splash .splash-title span{ color:var(--green); }
+  #splash.hidden{ opacity:0; pointer-events:none; }
+  @keyframes splash-pulse{ 0%,100%{ transform:scale(1); opacity:1; } 50%{ transform:scale(1.04); opacity:0.85; } }
+
   header{
     position:sticky; top:0; z-index:20;
     background:linear-gradient(180deg, rgba(11,14,20,0.98), rgba(11,14,20,0.92));
@@ -239,6 +254,10 @@
 </style>
 </head>
 <body>
+<div id="splash">
+  <img src="icons/icon-512.png" alt="">
+  <div class="splash-title">MEGABITES <span>MINIFIGS</span></div>
+</div>
 
 <header>
   <div class="title-row">
@@ -414,7 +433,7 @@
 (function(){
   "use strict";
 
-  const APP_VERSION = "1.7.0";
+  const APP_VERSION = "1.8.0";
 
   // ---------- IndexedDB layer ----------
   const DB_NAME = "minifig-registry";
@@ -1007,6 +1026,18 @@
 
   // ---------- Init ----------
   (async function init(){
+    const splashStart = Date.now();
+    function hideSplash(){
+      const splash = document.getElementById("splash");
+      if(!splash) return;
+      const elapsed = Date.now() - splashStart;
+      const remaining = Math.max(0, 500 - elapsed);
+      setTimeout(() => {
+        splash.classList.add("hidden");
+        setTimeout(() => splash.remove(), 450);
+      }, remaining);
+    }
+    setTimeout(hideSplash, 4000); // safety net if init hangs
     const versionTag = document.getElementById("versionTag");
     versionTag.textContent = "v" + APP_VERSION;
     versionTag.onclick = async () => {
@@ -1031,6 +1062,7 @@
       showToast("Storage unavailable in this preview");
       console.error(err);
     }
+    hideSplash();
 
     if("serviceWorker" in navigator){
       navigator.serviceWorker.register("sw.js").catch(()=>{});
