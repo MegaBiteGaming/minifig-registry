@@ -1,4 +1,4 @@
-const CACHE_NAME = "megabites-minifigs-v9";
+const CACHE_NAME = "megabites-minifigs-v11";
 const ASSETS = [
   "./",
   "./index.html",
@@ -6,7 +6,8 @@ const ASSETS = [
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/apple-touch-icon.png",
-  "./icons/logo-header.png"
+  "./icons/logo-header.png",
+  "./icons/splash-logo.png"
 ];
 
 self.addEventListener("install", (event) => {

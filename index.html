@@ -35,18 +35,22 @@
 
   #splash{
     position:fixed; inset:0; z-index:200;
-    background:var(--bg);
+    background:#000;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:16px;
     transition:opacity .4s ease;
   }
-  #splash img{ width:96px; height:96px; border-radius:22px; box-shadow:0 8px 30px rgba(0,0,0,0.35); animation:splash-pulse 1.6s ease-in-out infinite; }
+  #splash img{ width:220px; height:220px; animation:splash-pulse 1.8s ease-in-out infinite; }
   #splash .splash-title{
     font-family:var(--sans); font-weight:700; letter-spacing:0.08em; font-size:16px; color:var(--text);
+    margin-top:-6px;
   }
   #splash .splash-title span{ color:var(--green); }
+  #splash .splash-version{
+    font-family:var(--mono); font-size:11px; letter-spacing:0.04em; color:var(--text-muted); opacity:0.7;
+  }
   #splash.hidden{ opacity:0; pointer-events:none; }
-  @keyframes splash-pulse{ 0%,100%{ transform:scale(1); opacity:1; } 50%{ transform:scale(1.04); opacity:0.85; } }
+  @keyframes splash-pulse{ 0%,100%{ transform:scale(1); opacity:1; } 50%{ transform:scale(1.05); opacity:0.85; } }
 
   header{
     position:sticky; top:0; z-index:20;
@@ -255,8 +259,9 @@
 </head>
 <body>
 <div id="splash">
-  <img src="icons/icon-512.png" alt="">
+  <img src="icons/splash-logo.png" alt="MegaBite logo">
   <div class="splash-title">MEGABITES <span>MINIFIGS</span></div>
+  <div class="splash-version" id="splashVersion"></div>
 </div>
 
 <header>
@@ -433,7 +438,7 @@
 (function(){
   "use strict";
 
-  const APP_VERSION = "1.8.1";
+  const APP_VERSION = "1.8.3";
 
   // ---------- IndexedDB layer ----------
   const DB_NAME = "minifig-registry";
@@ -1038,6 +1043,7 @@
       }, remaining);
     }
     setTimeout(hideSplash, 4000); // safety net if init hangs
+    document.getElementById("splashVersion").textContent = "v" + APP_VERSION;
     const versionTag = document.getElementById("versionTag");
     versionTag.textContent = "v" + APP_VERSION;
     versionTag.onclick = async () => {
